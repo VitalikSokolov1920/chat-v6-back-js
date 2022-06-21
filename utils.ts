@@ -107,9 +107,25 @@ export function getDialogList(res: Response, authId: string) {
                 (SELECT count(*) FROM message m WHERE m.send_from_id=u.id AND m.send_to_id=? AND m.is_read=FALSE) as unread_messages_amount
                 FROM user u 
                 WHERE 
-                u.id IN (SELECT DISTINCT first_id FROM dialog WHERE second_id=? UNION SELECT second_id as first_id from dialog d WHERE d.first_id=?)
+                u.id IN (
+                    SELECT DISTINCT first_id FROM dialog WHERE second_id=? 
+                    UNION 
+                    SELECT second_id as first_id from dialog d WHERE d.first_id=?)
+                AND
+                IF (
+                    u.id IN (
+                        SELECT created_by FROM dialog d
+                        WHERE (SELECT count(*) FROM message
+                        WHERE send_from_id=d.first_id AND send_to_id=d.second_id
+                        OR
+                        send_from_id=d.second_id AND send_to_id=d.first_id) = 0
+                        AND created_by!=?
+                    ),
+                    false,
+                    true
+                )
                 ORDER BY timestamp DESC`,
-                [authId, authId, authId, authId, authId, authId, authId]).then(result => {
+                [authId, authId, authId, authId, authId, authId, authId, authId]).then(result => {
                     const userList = (result[0] as any)
 
                     res.json(userList).end();
@@ -119,7 +135,11 @@ export function getDialogList(res: Response, authId: string) {
 
 export function clearEmptyDialogs(authId: string) {
     return pool.query(`DELETE FROM dialog d
-        WHERE (SELECT count(*) FROM message WHERE send_from_id=d.first_id AND send_to_id=d.second_id OR send_from_id=d.second_id AND send_to_id=d.first_id) = 0 AND created_by=?`, [ authId ]);
+        WHERE (SELECT count(*) FROM message 
+        WHERE send_from_id=d.first_id AND send_to_id=d.second_id
+        OR
+        send_from_id=d.second_id AND send_to_id=d.first_id) = 0
+        AND created_by=?`, [ authId ]);
 }
 
 export function getDialogMessagesCount(res: Response, id: string, authId: string) {
