@@ -44,11 +44,11 @@ export function register(res: Response, login: string, password: string, firstNa
                errorMessage: 'Пользователь с таким логином уже существует'
            }).end();
        } else {
-           pool.query(`INSERT INTO user (login, password, first_name, last_name, role) VALUES (?, ?, ?, ?, 'CLIENT')`,
+           pool.query(`INSERT INTO user (login, password, first_name, last_name) VALUES (?, ?, ?, ?)`,
                [login, password, firstName, lastName]).then(result => {
                    const id = (result[0] as any).insertId;
 
-                   pool.query(`SELECT first_name, last_name, id, role FROM user WHERE id=?`, [id]).then(result => {
+                   pool.query(`SELECT first_name, last_name, id FROM user WHERE id=?`, [id]).then(result => {
                        const user = (result[0] as any)[0];
 
                        user.token = jwt.sign({
