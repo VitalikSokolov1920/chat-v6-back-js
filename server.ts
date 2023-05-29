@@ -324,7 +324,7 @@ apiRouter.post('/apply-friend-request', (req, res) => {
     const requestToId = req.body.requestToId as string;
     const requestFromId = req.body.requestFromId as string;
 
-    pool.query(`DELETE FROM friend_request WHERE request_from=? AND request_to=?`, [requestFromId, requestToId])
+    pool.query(`DELETE FROM friend_request WHERE request_from=? AND request_to=? OR request_from=? AND request_to=?`, [requestFromId, requestToId, requestToId, requestFromId])
         .then(result => {
             pool.query(`INSERT INTO friends VALUES (?, ?), (?, ?)`, [requestFromId, requestToId, requestToId, requestFromId])
                 .then(result => {

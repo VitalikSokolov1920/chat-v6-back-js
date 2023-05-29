@@ -224,7 +224,9 @@ function returnDialog(res: Response, id: string, authUserId: string, limit: numb
 export function getUserById(res: Response, id: string, authId: string) {
     pool.query(`SELECT
         IF (u.id IN (SELECT first_id FROM friends WHERE second_id=?), TRUE, FALSE) as is_friends,
-        u.id, u.first_name, u.last_name FROM user u WHERE u.id=?`, [authId, id]).then(result => {
+        IF ((SELECT count(*) FROM friend_request WHERE request_from=? AND request_to=u.id) > 0, TRUE, FALSE) as is_requested_friends_from_auth_user,
+        IF ((SELECT count(*) FROM friend_request WHERE request_from=u.id AND request_to=?) > 0, TRUE, FALSE) as is_requested_friends_to_auth_user,
+        u.id, u.first_name, u.last_name FROM user u WHERE u.id=?`, [authId, authId, authId, id]).then(result => {
         const user = (result[0] as any)[0];
 
         res.json(user).status(200).end();
