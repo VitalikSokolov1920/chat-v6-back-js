@@ -167,7 +167,10 @@ export function clearEmptyDialogs(authId: string) {
         WHERE send_from_id=d.first_id AND send_to_id=d.second_id
         OR
         send_from_id=d.second_id AND send_to_id=d.first_id) = 0
-        AND created_by=?`, [ authId ]);
+        AND created_by=?`, [ authId ])
+        .catch(err => {
+            console.log(err);
+        });
 }
 
 export function getDialogMessagesCount(res: Response, id: string, authId: string) {
